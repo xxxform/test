@@ -1,14 +1,9 @@
 <template>
-    <h1>{{ $store.state.isAuth ? 'Пользователь авторизован' : 'Авторизуйтесь' }}</h1>
-    <h1>{{ $store.getters.doubleLikes }}</h1>
-    <div>
-        <my-button @click="$store.commit('incrementLikes')">Лайк</my-button>
-        <my-button @click="$store.commit('decrementLikes')">Диз</my-button>
-    </div>
-    <my-input v-focus v-model="searchQuery" placeholder="Поиск..."/>
+    <h1>Посты</h1> <!--заменили vmodel на два действия из за привязки к vuex-->
+    <my-input v-focus :model-value="searchQuery" @update:model-value="setSearchQuery" placeholder="Поиск..."/>
     <div class="app__btns">
         <my-button  @click="showDialog">Создать пост</my-button>
-        <my-select v-model="selectedSort" :options="sortOptions"/>
+        <my-select :model-value="selectedSort" @update:model-value="setSelectedSort" :options="sortOptions"/>
     </div>
     <my-dialog v-model:show="dialogVisible">
         <post-form @create="createPost"/>
@@ -27,6 +22,7 @@
 import PostForm from '@/components/PostForm';
 import PostList from '@/components/PostList';
 import Pagination from '@/components/Pagination';
+import { mapState, mapGetters, mapActions, mapMutations } from 'vuex';
 
 export default {
     components: {
@@ -34,43 +30,27 @@ export default {
     },
     data() {
         return {
-            posts: [],
             dialogVisible: false,
-            isPostsLoading: false,
-            selectedSort: '',
-            searchQuery: '',
-            page: 1,
-            limit: 10,
-            totalPages: 0,
-            sortOptions: [
-                {value: 'title', name: 'По названию'},
-                {value: 'body', name: 'По содержимому'},
-            ]
         }
     },
     mounted() {
-        this.loadMorePosts();
+        console.log(this.$store.state.isAuth)
+        this.fetchPosts();
     }, 
     methods: { 
-        async loadMorePosts() { 
-            this.page += 1;
-            try {
-                const response = await fetch(`https://jsonplaceholder.typicode.com/posts?_limit=${this.limit}&_page=${this.page}`);
-                const json = await response.json();
-
-                this.totalPages = Math.ceil(response.headers.get('x-total-count') / this.limit);
-                this.posts.push(...json);
-
-            } catch (e) {
-                alert('Произошла ошибка при загрузке');
-            } 
-        },
+        ...mapMutations({
+            setPage: 'post/setPage',
+            setSearchQuery: 'post/setSearchQuery',
+            setSelectedSort: 'post/setSelectedSort',
+            removePost: 'post/removePost'
+        }),
+        ...mapActions({
+            loadMorePosts: 'post/loadMorePosts',
+            fetchPosts: 'post/fetchPosts'
+        }),
         showDialog() {
             this.dialogVisible = true;
         },
-        removePost(post) {
-            this.posts = this.posts.filter(p => p.id !== post.id);
-        }, 
         createPost(newPost) {
             this.posts.push(newPost);
             this.dialogVisible = false;
@@ -78,16 +58,21 @@ export default {
         //changePage(pageNumber) { this.page = pageNumber;}
     },
     computed: {
-        sortedPosts() {
-            return [...this.posts].sort(((post1, post2) => {
-                return post1[this.selectedSort]?.localeCompare(post2[this.selectedSort]);
-            }));
-        },
-        sortedAndSearchedPosts() {
-            return this.sortedPosts.filter(post => post.title.toLowerCase().includes(this.searchQuery.toLowerCase()));
-        }
-    },
-    //watch: {page() {this.fetchPosts();}}
+        ...mapState({
+            posts: state => state.post.posts,
+            isPostsLoading: state => state.post.isPostsLoading,
+            selectedSort: state => state.post.selectedSort,
+            searchQuery: state => state.post.searchQuery,
+            page: state => state.post.page,
+            limit: state => state.post.limit,
+            totalPages: state => state.post.totalPages,
+            sortOptions: state => state.post.sortOptions,
+        }),
+        ...mapGetters({
+            sortedPosts: 'post/sortedPosts',
+            sortedAndSearchedPosts: 'post/sortedAndSearchedPosts'
+        })
+    }
 }
 </script>
 
