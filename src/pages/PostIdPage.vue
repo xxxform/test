@@ -1,6 +1,9 @@
 <template>
-    <div>
-        <h1>Это страница с ID = {{ $route.params.id }} </h1>
+    <div class="post">
+        <div>
+            <div><strong>Название:</strong> {{ postTitle }}</div>
+            <div><strong>Описание:</strong> {{ postMessage }}</div>
+        </div>
     </div>
 </template>
 
@@ -30,4 +33,13 @@
     }
 </script>
 
-<style scoped></style>
+<style scoped>
+.post {
+    padding: 15px;
+    border: 2px solid teal;
+    margin-top: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+</style>
