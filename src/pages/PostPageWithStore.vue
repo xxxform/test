@@ -34,7 +34,6 @@ export default {
         }
     },
     mounted() {
-        console.log(this.$store.state.isAuth)
         this.fetchPosts();
     }, 
     methods: { 
